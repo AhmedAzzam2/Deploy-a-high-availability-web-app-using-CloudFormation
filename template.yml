@@ -8,7 +8,171 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
   # Internet Gateway
+  InternetGateway:AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  # VPC
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+  # Internet Gateway
   InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  # Attach the Internet Gateway to the VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref InternetGateway
+  # Create a public subnet
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+  # Create a private subnet
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+  # Create a route table for the public subnet
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+  # Create a route for the public route table
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  # Associate the public route table with the public subnet
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+  # Create a security group for the instances
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for the instances
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+  # Create a security group for the load balancer
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for the load balancer
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+  # Create a launch configuration for the instances
+  LaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: ami-0ff8a91507f77f867
+      InstanceType: t2.micro
+      SecurityGroups:
+      - !Ref InstanceSecurityGroup
+  # Create an auto scaling group
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+      - !Ref PublicSubnet
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      MinSize: 2
+      MaxSize: 4
+  # Create a load balancer
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Subnets:
+      - !Ref PublicSubnet
+      SecurityGroups:
+      - !Ref LoadBalancerSecurityGroup
+      HealthCheck:
+        Target: HTTP:80/health
+        HealthyThreshold: 3
+        UnhealthyThreshold: 3
+        Interval: 30
+        Timeout: 5
+  # Create a target group for the instances
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref MyVPC
+      Port: 80
+      Protocol: HTTP
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      TargetType: instance
+  # Create a listener for the load balancer
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn: !Ref TargetGroup
+  # Create an S3 bucket
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-bucket
+  # Create an IAM role for the instances
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          Bool:
+            aws:SecureTransport: 'true'
+        Effect: Allow
+        Principal:
+          Service:
+            - ec2.amazonaws.com
+      Path: /
+  # Attach the S3 policy to the IAM role
+  S3Policy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: S3Access
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Bool:
+            aws:SecureTransport: 'true'
+        Effect: Allow
+        Action:
+        - s3:ListBucket
+        - s3:GetObject
+        Resource: arn:aws:s3:::my-bucket
+      Roles:
+      - !Ref InstanceRole
+  # Output the load balancer DNS name
+  Outputs:
+    LoadBalancerDNS:
+      Value: !GetAtt LoadBalancer.DNSName
+
     Type: AWS::EC2::InternetGateway
   # Attach the Internet Gateway to the VPC
   AttachGateway:
