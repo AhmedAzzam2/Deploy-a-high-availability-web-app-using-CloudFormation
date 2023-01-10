@@ -1,335 +1,770 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  Udacity demo for Udagram
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resources
+    Type: String
+    Default: UdagramFinalProject
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.0.0/24
+  PublicSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.1.0/24
+    
+#   MyVPC:
+#     Type: AWS::EC2::VPC
+#     Properties:
+#       CidrBlock: 10.0.0.0/16
+#       EnableDnsSupport: true
+#       EnableDnsHostnames: true
+#   # Internet Gateway
+#   InternetGateway:AWSTemplateFormatVersion: '2010-09-09'
+# Resources:
+#   # VPC
+#   MyVPC:
+#     Type: AWS::EC2::VPC
+#     Properties:
+#       CidrBlock: 10.0.0.0/16
+#       EnableDnsSupport: true
+#       EnableDnsHostnames: true
+#   # Internet Gateway
+#   InternetGateway:
+#     Type: AWS::EC2::InternetGateway
+#   # Attach the Internet Gateway to the VPC
+#   AttachGateway:
+#     Type: AWS::EC2::VPCGatewayAttachment
+#     Properties:
+#       VpcId: !Ref MyVPC
+#       InternetGatewayId: !Ref InternetGateway
+#   # Create a public subnet
+
+  PrivateSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.2.0/24
+  PrivateSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.3.0/24
+  InstanceType:
+    Description: Please enter the type of instance that has at least 2 vCPU and 4GB of RAM
+    Type: String
+  MinWebAppGroupSize:
+    Description: Please enter the minimum number of instances in web app group
+    Type: String
+  MaxWebAppGroupSize:
+    Description: Please enter the maximum number of instances in web app group
+    Type: String
+  AMI:
+    Description: Please enter the machine Image to be used.
+    Type: AWS::EC2::Image::Id
+    Default: ami-0747bdcabd34c712a
+
+  # MyVPC:
+  #   Type: AWS::EC2::VPC
+  #   Properties:
+  #     CidrBlock: 10.0.0.0/16
+  #     EnableDnsSupport: true
+  #     EnableDnsHostnames: true
+  # # Internet Gateway
+  # InternetGateway:
+  #   Type: AWS::EC2::InternetGateway
+  # # Attach the Internet Gateway to the VPC
+  # AttachGateway:
+  #   Type: AWS::EC2::VPCGatewayAttachment
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     InternetGatewayId: !Ref InternetGateway
+  # # Create a public subnet
+  # PublicSubnet:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     CidrBlock: 10.0.1.0/24
+  #     AvailabilityZone: !Select [ 0, !GetAZs ]
+  # # Create a private subnet
+  # PrivateSubnet:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     CidrBlock: 10.0.2.0/24
+  #     AvailabilityZone: !Select [ 0, !GetAZs ]
+  # # Create a route table for the public subnet
+  # PublicRouteTable:
+  #   Type: AWS::EC2::RouteTable
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  # # Create a route for the public route table
+  # PublicRoute:
+  #   Type: AWS::EC2::Route
+  #   Properties:
+  #     RouteTableId: !Ref PublicRouteTable
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     GatewayId: !Ref InternetGateway
+  # # Associate the public route table with the public subnet
+  # PublicSubnetRouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     SubnetId: !Ref PublicSubnet
+  #     RouteTableId: !Ref PublicRouteTable
+  # # Create a security group for the instances
+  # InstanceSecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: Security group for the instances
+  #     VpcId: !Ref MyVPC
+  #     SecurityGroupIngress:
+  #     - IpProtocol: tcp
+  #       FromPort: 80
+  #       ToPort: 80
+  #       CidrIp: 0.0.0.0/0
+  # # Create a security group for the load balancer
+  # LoadBalancerSecurityGroup:
+
+
 Resources:
-  # VPC
-  MyVPC:
+  VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsSupport: true
+      CidrBlock: !Ref VpcCIDR # Required
       EnableDnsHostnames: true
-  # Internet Gateway
-  InternetGateway:AWSTemplateFormatVersion: '2010-09-09'
-Resources:
-  # VPC
-  MyVPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
-  # Internet Gateway
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-VPC
   InternetGateway:
     Type: AWS::EC2::InternetGateway
-  # Attach the Internet Gateway to the VPC
-  AttachGateway:
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-InternetGateway
+  InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref MyVPC
       InternetGatewayId: !Ref InternetGateway
-  # Create a public subnet
-  PublicSubnet:
+      VpcId: !Ref VPC
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: 10.0.1.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs ]
-  # Create a private subnet
-  PrivateSubnet:
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC # Required
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PublicSubnet-AZ1
+  PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: 10.0.2.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs ]
-  # Create a route table for the public subnet
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC # Required
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PublicSubnet-AZ2
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC # Required
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PrivateSubnet-AZ1
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC # Required
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PrivateSubnet-AZ2
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-NatGateway1EIP
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-NatGateway2EIP
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1 # Required
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-NatGateway1
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      SubnetId: !Ref PublicSubnet2 # Required
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-NatGateway2
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref MyVPC
-  # Create a route for the public route table
-  PublicRoute:
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PublicRouteTable
+      VpcId: !Ref VPC # Required
+  DefaultPublicRoute:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
-  # Associate the public route table with the public subnet
-  PublicSubnetRouteTableAssociation:
+      RouteTableId: !Ref PublicRouteTable # Required
+  PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PublicSubnet
-      RouteTableId: !Ref PublicRouteTable
-  # Create a security group for the instances
-  InstanceSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+      RouteTableId: !Ref PublicRouteTable # Required
+      SubnetId: !Ref PublicSubnet1 # Required
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      GroupDescription: Security group for the instances
-      VpcId: !Ref MyVPC
-      SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
-        CidrIp: 0.0.0.0/0
-  # Create a security group for the load balancer
-  LoadBalancerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for the load balancer
-      VpcId: !Ref MyVPC
-      SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
-        CidrIp: 0.0.0.0/0
-  # Create a launch configuration for the instances
-  LaunchConfiguration:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    Properties:
-      ImageId: ami-0ff8a91507f77f867
-      InstanceType: t2.micro
-      SecurityGroups:
-      - !Ref InstanceSecurityGroup
-  # Create an auto scaling group
-  AutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      VPCZoneIdentifier:
-      - !Ref PublicSubnet
-      LaunchConfigurationName: !Ref LaunchConfiguration
-      MinSize: 2
-      MaxSize: 4
-  # Create a load balancer
-  LoadBalancer:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
-    Properties:
-      Subnets:
-      - !Ref PublicSubnet
-      SecurityGroups:
-      - !Ref LoadBalancerSecurityGroup
-      HealthCheck:
-        Target: HTTP:80/health
-        HealthyThreshold: 3
-        UnhealthyThreshold: 3
-        Interval: 30
-        Timeout: 5
-  # Create a target group for the instances
-  TargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      VpcId: !Ref MyVPC
-      Port: 80
-      Protocol: HTTP
-      HealthCheckIntervalSeconds: 30
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 3
-      UnhealthyThresholdCount: 3
-      TargetType: instance
-  # Create a listener for the load balancer
-  Listener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      LoadBalancerArn: !Ref LoadBalancer
-      Port: 80
-      Protocol: HTTP
-      DefaultActions:
-      - Type: forward
-        TargetGroupArn: !Ref TargetGroup
-  # Create an S3 bucket
-  Bucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: my-bucket
-  # Create an IAM role for the instances
-  InstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          Bool:
-            aws:SecureTransport: 'true'
-        Effect: Allow
-        Principal:
-          Service:
-            - ec2.amazonaws.com
-      Path: /
-  # Attach the S3 policy to the IAM role
-  S3Policy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: S3Access
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          Bool:
-            aws:SecureTransport: 'true'
-        Effect: Allow
-        Action:
-        - s3:ListBucket
-        - s3:GetObject
-        Resource: arn:aws:s3:::my-bucket
-      Roles:
-      - !Ref InstanceRole
-  # Output the load balancer DNS name
-  Outputs:
-    LoadBalancerDNS:
-      Value: !GetAtt LoadBalancer.DNSName
+      RouteTableId: !Ref PublicRouteTable # Required
+      SubnetId: !Ref PublicSubnet2 # Required
 
-    Type: AWS::EC2::InternetGateway
-  # Attach the Internet Gateway to the VPC
-  AttachGateway:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref MyVPC
-      InternetGatewayId: !Ref InternetGateway
-  # Create a public subnet
-  PublicSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: 10.0.1.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs ]
-  # Create a private subnet
-  PrivateSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: 10.0.2.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs ]
-  # Create a route table for the public subnet
-  PublicRouteTable:
+      
+  # LoadBalancerSecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: Security group for the load balancer
+  #     VpcId: !Ref MyVPC
+  #     SecurityGroupIngress:
+  #     - IpProtocol: tcp
+  #       FromPort: 80
+  #       ToPort: 80
+  #       CidrIp: 0.0.0.0/0
+  # # Create a launch configuration for the instances
+  # LaunchConfiguration:
+  #   Type: AWS::AutoScaling::LaunchConfiguration
+  #   Properties:
+  #     ImageId: ami-0ff8a91507f77f867
+  #     InstanceType: t2.micro
+  #     SecurityGroups:
+  #     - !Ref InstanceSecurityGroup
+  # # Create an auto scaling group
+  # AutoScalingGroup:
+  #   Type: AWS::AutoScaling::AutoScalingGroup
+  #   Properties:
+  #     VPCZoneIdentifier:
+  #     - !Ref PublicSubnet
+  #     LaunchConfigurationName: !Ref LaunchConfiguration
+  #     MinSize: 2
+  #     MaxSize: 4
+  # # Create a load balancer
+  # LoadBalancer:
+  #   Type: AWS::ElasticLoadBalancing::LoadBalancer
+  #   Properties:
+  #     Subnets:
+  #     - !Ref PublicSubnet
+  #     SecurityGroups:
+  #     - !Ref LoadBalancerSecurityGroup
+  #     HealthCheck:
+  #       Target: HTTP:80/health
+  #       HealthyThreshold: 3
+  #       UnhealthyThreshold: 3
+  #       Interval: 30
+  #       Timeout: 5
+  # # Create a target group for the instances
+  # TargetGroup:
+  #   Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     Port: 80
+  #     Protocol: HTTP
+  #     HealthCheckIntervalSeconds: 30
+  #     HealthCheckTimeoutSeconds: 5
+  #     HealthyThresholdCount: 3
+  #     UnhealthyThresholdCount: 3
+  #     TargetType: instance
+  # # Create a listener for the load balancer
+  # Listener:
+  #   Type: AWS::ElasticLoadBalancingV2::Listener
+  #   Properties:
+  #     LoadBalancerArn: !Ref LoadBalancer
+  #     Port: 80
+  #     Protocol: HTTP
+  #     DefaultActions:
+  #     - Type: forward
+  #       TargetGroupArn: !Ref TargetGroup
+  # # Create an S3 bucket
+  # Bucket:
+  #   Type: AWS::S3::Bucket
+  #   Properties:
+  #     BucketName: my-bucket
+  # # Create an IAM role for the instances
+  # InstanceRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Statement:
+  #         Bool:
+  #           aws:SecureTransport: 'true'
+  #       Effect: Allow
+  #       Principal:
+  #         Service:
+  #           - ec2.amazonaws.com
+  #     Path: /
+  # # Attach the S3 policy to the IAM role
+  # S3Policy:
+  #   Type: AWS::IAM::Policy
+  #   Properties:
+  #     PolicyName: S3Access
+  #     PolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         Bool:
+  #           aws:SecureTransport: 'true'
+  #       Effect: Allow
+  #       Action:
+  #       - s3:ListBucket
+  #       - s3:GetObject
+  #       Resource: arn:aws:s3:::my-bucket
+  #     Roles:
+  #     - !Ref InstanceRole
+  # # Output the load balancer DNS name
+  # Outputs:
+  #   LoadBalancerDNS:
+  #     Value: !GetAtt LoadBalancer.DNSName
+
+  #   Type: AWS::EC2::InternetGateway
+  # # Attach the Internet Gateway to the VPC
+  # AttachGateway:
+  #   Type: AWS::EC2::VPCGatewayAttachment
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     InternetGatewayId: !Ref InternetGateway
+  # # Create a public subnet
+  # PublicSubnet:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     CidrBlock: 10.0.1.0/24
+  #     AvailabilityZone: !Select [ 0, !GetAZs ]
+  # # Create a private subnet
+  # PrivateSubnet:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     CidrBlock: 10.0.2.0/24
+  #     AvailabilityZone: !Select [ 0, !GetAZs ]
+  # # Create a route table for the public subnet
+  # PublicRouteTable:
+  #   Type: AWS::EC2::RouteTable
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  # # Create a route for the public route table
+  # PublicRoute:
+  #   Type: AWS::EC2::Route
+  #   Properties:
+  #     RouteTableId: !Ref PublicRouteTable
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     GatewayId: !Ref InternetGateway
+  # # Associate the public route table with the public subnet
+  # PublicSubnetRouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     SubnetId: !Ref PublicSubnet
+  #     RouteTableId: !Ref PublicRouteTable
+  # # Create a security group for the instances
+  # InstanceSecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: Security group for the instances
+  #     VpcId: !Ref MyVPC
+  #     SecurityGroupIngress:
+  #     - IpProtocol: tcp
+  #       FromPort: 80
+  #       ToPort: 80
+  #       CidrIp: 0.0.0.0/0
+  # # Create a security group for the load balancer
+  # LoadBalancerSecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: Security group for the load balancer
+  #     VpcId: !Ref MyVPC
+  #     SecurityGroupIngress:
+  #     - IpProtocol:
+  # LoadBalancerSecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: Security group for the load balancer
+  #     VpcId: !Ref MyVPC
+  #     SecurityGroupIngress:
+  #     - IpProtocol: tcp
+  #       FromPort: 80
+  #       ToPort: 80
+  #       CidrIp: 0.0.0.0/0
+
+  PrivateRouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref MyVPC
-  # Create a route for the public route table
-  PublicRoute:
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PrivateRouteTable-AZ1
+      VpcId: !Ref VPC # Required
+  DefaultPrivateRoute1:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-  # Associate the public route table with the public subnet
-  PublicSubnetRouteTableAssociation:
+      NatGatewayId: !Ref NatGateway1
+      RouteTableId: !Ref PrivateRouteTable1 # Required
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PrivateRouteTable-AZ2
+      VpcId: !Ref VPC # Required
+  DefaultPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+      RouteTableId: !Ref PrivateRouteTable2 # Required
+  PrivateSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PublicSubnet
-      RouteTableId: !Ref PublicRouteTable
-  # Create a security group for the instances
-  InstanceSecurityGroup:
+      RouteTableId: !Ref PrivateRouteTable2 # Required
+      SubnetId: !Ref PrivateSubnet2 # Required
+  LoadBalananceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for the instances
-      VpcId: !Ref MyVPC
+      GroupDescription: Allow requests HTTP to load balancer # Required
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
       SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
-        CidrIp: 0.0.0.0/0
-  # Create a security group for the load balancer
-  LoadBalancerSecurityGroup:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-LoadBalananceSecurityGroup
+      VpcId: !Ref VPC
+  WebServerSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for the load balancer
-      VpcId: !Ref MyVPC
+      GroupDescription: Allow requests HTTP to hosts and SSH from local only # Required
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
       SecurityGroupIngress:
-      - IpProtocol:
-  LoadBalancerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-WebServerSecGroup
+      VpcId: !Ref VPC
+  ListS3BucketsRole:
+    Type: AWS::IAM::Role
     Properties:
-      GroupDescription: Security group for the load balancer
-      VpcId: !Ref MyVPC
-      SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
-        CidrIp: 0.0.0.0/0
-  # Create a launch configuration for the instances
-  LaunchConfiguration:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+      AssumeRolePolicyDocument: # Required
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-ListS3BucketsRole
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     CidrBlock: 10.0.1.0/24
+  #     AvailabilityZone: !Select [ 0, !GetAZs ]
+  # # Create a private subnet
+  # PrivateSubnet:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     CidrBlock: 10.0.2.0/24
+  #     AvailabilityZone: !Select [ 0, !GetAZs ]
+  # # Create a route table for the public subnet
+  # PublicRouteTable:
+  #   Type: AWS::EC2::RouteTable
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  # # Create a route for the public route table
+  # PublicRoute:
+  #   Type: AWS::EC2::Route
+  #   Properties:
+  #     RouteTableId: !Ref PublicRouteTable
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     GatewayId: !Ref InternetGateway
+  # # Associate the public route table with the public subnet
+  # PublicSubnetRouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     SubnetId: !Ref PublicSubnet
+  #     RouteTableId: !Ref PublicRouteTable
+  # # Create a security group for the instances
+  # InstanceSecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: Security group for the instances
+  #     VpcId: !Ref MyVPC
+  #     SecurityGroupIngress:
+  #     - IpProtocol: tcp
+  #       FromPort: 80
+  #       ToPort: 80
+  #       CidrIp: 0.0.0.0/0
+  # # Create a security group for the load balancer
+  ListS3BucketsPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument: # Required
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:*
+            Resource: "*"
+      PolicyName: AmazonS3ReadOnlyAccess # Required
+      Roles:
+        - Ref: ListS3BucketsRole
+  ListS3BucketsInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles: # Required
+        - Ref: ListS3BucketsRole
+  WebAppLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      ImageId: ami-0ff8a91507f77f867
-      InstanceType: t2.micro
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdk
+          Ebs:
+            VolumeSize: 10
+      IamInstanceProfile: !Ref ListS3BucketsInstanceProfile
+      ImageId: !Ref AMI # Required
+      InstanceType: !Ref InstanceType # Required
       SecurityGroups:
-      - !Ref InstanceSecurityGroup
-  # Create an auto scaling group
-  AutoScalingGroup:
+        - Ref: WebServerSecGroup
+      UserData:
+        Fn::Base64: !Sub |
+            #!/bin/bash
+            sudo apt-get update -y
+            sudo apt-get install unzip awscli -y
+            sudo apt-get install apache2 -y
+            sudo systemctl start apache2.service
+            cd /var/www/html
+            echo '<!DOCTYPE html> <html> <head> <title>W3.CSS Template</title> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> <style> body {font-family: "Times New Roman", Georgia, Serif;} h1, h2, h3, h4, h5, h6 { font-family: "Playfair Display"; letter-spacing: 5px; } </style> </head> <body> <!-- Navbar (sit on top) --> <div class="w3-top"> <div class="w3-bar w3-white w3-padding w3-card" style="letter-spacing:4px;"> <a href="#home" class="w3-bar-item w3-button">Gourmet au Catering</a> <!-- Right-sided navbar links. Hide them on small screens --> <div class="w3-right w3-hide-small"> <a href="#about" class="w3-bar-item w3-button">About</a> <a href="#menu" class="w3-bar-item w3-button">Menu</a> <a href="#contact" class="w3-bar-item w3-button">Contact</a> </div> </div> </div> <!-- Header --> <header class="w3-display-container w3-content w3-wide" style="max-width:1600px;min-width:500px" id="home"> <img class="w3-image" src="/w3images/hamburger.jpg" alt="Hamburger Catering" width="1600" height="800"> <div class="w3-display-bottomleft w3-padding-large w3-opacity"> <h1 class="w3-xxlarge">Le Catering</h1> </div> </header> <!-- Page content --> <div class="w3-content" style="max-width:1100px"> <!-- About Section --> <div class="w3-row w3-padding-64" id="about"> <div class="w3-col m6 w3-padding-large w3-hide-small"> <img src="/w3images/tablesetting2.jpg" class="w3-round w3-image w3-opacity-min" alt="Table Setting" width="600" height="750"> </div> <div class="w3-col m6 w3-padding-large"> <h1 class="w3-center">About Catering</h1><br> <h5 class="w3-center">Tradition since 1889</h5> <p class="w3-large">The Catering was founded in blabla by Mr. Smith in lorem ipsum dolor sit amet, consectetur adipiscing elit consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute iruredolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.We only use <span class="w3-tag w3-light-grey">seasonal</span> ingredients.</p> <p class="w3-large w3-text-grey w3-hide-medium">Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod temporincididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p> </div> </div> <hr> <!-- Menu Section --> <div class="w3-row w3-padding-64" id="menu"> <div class="w3-col l6 w3-padding-large"> <h1 class="w3-center">Our Menu</h1><br> <h4>Bread Basket</h4> <p class="w3-text-grey">Assortment of fresh baked fruit breads and muffins 5.50</p><br> <h4>Honey Almond Granola with Fruits</h4> <p class="w3-text-grey">Natural cereal of honey toasted oats, raisins, almonds and dates 7.00</p><br> <h4>Belgian Waffle</h4> <p class="w3-text-grey">Vanilla flavored batter with malted flour 7.50</p><br> <h4>Scrambled eggs</h4> <p class="w3-text-grey">Scrambled eggs, roasted red pepper and garlic, with green onions 7.50</p><br> <h4>Blueberry Pancakes</h4> <p class="w3-text-grey">With syrup, butter and lots of berries 8.50</p> </div> <div class="w3-col l6 w3-padding-large"> <img src="/w3images/tablesetting.jpg" class="w3-round w3-image w3-opacity-min" alt="Menu" style="width:100%"> </div> </div> <hr> <!-- Contact Section --> <div class="w3-container w3-padding-64" id="contact"> <h1>Contact</h1><br> <p>We offer full-service catering for any event, large or small. We understand your needs and we will cater the food to satisfy the biggerst criteria of them all, both look and taste. Do not hesitate to contact us.</p> <p class="w3-text-blue-grey w3-large"><b>Catering Service, 42nd Living St, 43043 New York, NY</b></p> <p>You can also contact us by phone 00553123-2323 or email catering@catering.com, or you can send us a message here:</p> <form action="/action_page.php" target="_blank"> <p><input class="w3-input w3-padding-16" type="text" placeholder="Name" required name="Name"></p> <p><input class="w3-input w3-padding-16" type="number" placeholder="How many people" required name="People"></p> <p><input class="w3-input w3-padding-16" type="datetime-local" placeholder="Date and time" required name="date" value="2020-11-16T20:00"></p> <p><input class="w3-input w3-padding-16" type="text" placeholder="Message \ Special requirements" required name="Message"></p> <p><button class="w3-button w3-light-grey w3-section" type="submit">SEND MESSAGE</button></p> </form> </div> <!-- End page content --> </div> <!-- Footer --> <footer class="w3-center w3-light-grey w3-padding-32"> <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp" title="W3.CSS" target="_blank" class="w3-hover-text-green">w3.css</a></p> </footer> </body> </html>' > index.html 
+            sudo aws s3 cp s3://udacity-demo-1/udacity.zip .
+            sudo unzip -oj udacity.zip
+            sudo systemctl restart apache2.service
+  WebAppGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn: [PrivateSubnet1, PrivateSubnet2]
     Properties:
+      LaunchConfigurationName:
+        Ref: WebAppLaunchConfig
+      MaxSize: !Ref MaxWebAppGroupSize # Required
+      MinSize: !Ref MinWebAppGroupSize # Required
+      TargetGroupARNs:
+        - Ref: WebAppTargetGroup
       VPCZoneIdentifier:
-      - !Ref PublicSubnet
-      LaunchConfigurationName: !Ref LaunchConfiguration
-      MinSize: 2
-      MaxSize: 4
-  # Create a load balancer
-  LoadBalancer:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
+        - !Join [",", [!Ref PublicSubnet1, !Ref PublicSubnet2]]
+  WebAppLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Subnets:
-      - !Ref PublicSubnet
       SecurityGroups:
-      - !Ref LoadBalancerSecurityGroup
-      HealthCheck:
-        Target: HTTP:80/health
-        HealthyThreshold: 3
-        UnhealthyThreshold: 3
-        Interval: 30
-        Timeout: 5
-  # Create a target group for the instances
-  TargetGroup:
+        - Ref: LoadBalananceSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-WebAppLoadBalancer
+          
+  # LoadBalancerSecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: Security group for the load balancer
+  #     VpcId: !Ref MyVPC
+  #     SecurityGroupIngress:
+  #     - IpProtocol:
+  # LoadBalancerSecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: Security group for the load balancer
+  #     VpcId: !Ref MyVPC
+  #     SecurityGroupIngress:
+  #     - IpProtocol: tcp
+  #       FromPort: 80
+  #       ToPort: 80
+  #       CidrIp: 0.0.0.0/0
+  # # Create a launch configuration for the instances
+  # LaunchConfiguration:
+  #   Type: AWS::AutoScaling::LaunchConfiguration
+  #   Properties:
+  #     ImageId: ami-0ff8a91507f77f867
+  #     InstanceType: t2.micro
+  #     SecurityGroups:
+  #     - !Ref InstanceSecurityGroup
+  # # Create an auto scaling group
+  # AutoScalingGroup:
+  #   Type: AWS::AutoScaling::AutoScalingGroup
+  #   Properties:
+  #     VPCZoneIdentifier:
+  #     - !Ref PublicSubnet
+  #     LaunchConfigurationName: !Ref LaunchConfiguration
+  #     MinSize: 2
+  #     MaxSize: 4
+  # # Create a load balancer
+  # LoadBalancer:
+  #   Type: AWS::ElasticLoadBalancing::LoadBalancer
+  #   Properties:
+  #     Subnets:
+  #     - !Ref PublicSubnet
+  #     SecurityGroups:
+  #     - !Ref LoadBalancerSecurityGroup
+  #     HealthCheck:
+  #       Target: HTTP:80/health
+  #       HealthyThreshold: 3
+  #       UnhealthyThreshold: 3
+  #       Interval: 30
+  #       Timeout: 5
+  # # Create a target group for the instances
+  WebAppTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      VpcId: !Ref MyVPC
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 8
+      HealthyThresholdCount: 2
       Port: 80
       Protocol: HTTP
-      HealthCheckIntervalSeconds: 30
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 3
-      UnhealthyThresholdCount: 3
-      TargetType: instance
-  # Create a listener for the load balancer
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-WebAppTargetGroup
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref VPC
   Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
-      LoadBalancerArn: !Ref LoadBalancer
+      DefaultActions: # Required
+        - Type: forward
+          TargetGroupArn:
+            Ref: WebAppTargetGroup
+      LoadBalancerArn: !Ref WebAppLoadBalancer # Required
       Port: 80
       Protocol: HTTP
-      DefaultActions:
-      - Type: forward
-        TargetGroupArn: !Ref TargetGroup
-  # Create an S3 bucket
-  Bucket:
-    Type: AWS::S3::Bucket
+  ALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
-      BucketName: my-bucket
-  # Create an IAM role for the instances
-  InstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          Bool:
-            aws:SecureTransport: 'true'
-        Effect: Allow
-        Principal:
-          Service:
-            - ec2.amazonaws.com
-      Path: /
-  # Attach the S3 policy to the IAM role
-  S3Policy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: S3Access
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          Bool:
-            aws:SecureTransport: 'true'
-        Effect: Allow
-        Action:
-        - s3:ListBucket
-        - s3:GetObject
-        Resource: arn:aws:s3:::my-bucket
-      Roles:
-      - !Ref InstanceRole
-  # Output the load balancer DNS name
-  Outputs:
-    LoadBalancerDNS:
-      Value: !GetAtt LoadBalancer.DNSName
+      Actions: # Required
+        - Type: forward
+          TargetGroupArn: !Ref WebAppTargetGroup
+      Conditions: # Required
+        - Field: path-pattern
+          Values: [/]
+      ListenerArn: !Ref Listener # Required
+      Priority: 1 # Required
+Outputs:
+  LoadBalancerURL:
+    Description: LoadBalancer Public URL
+    Value: !Join ["", ["http://" , !GetAtt WebAppLoadBalancer.DNSName ]]
+    Export:
+      Name: !Sub ${EnvironmentName}-LoadBalancerURL
+      
+  # TargetGroup:
+  #   Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  #   Properties:
+  #     VpcId: !Ref MyVPC
+  #     Port: 80
+  #     Protocol: HTTP
+  #     HealthCheckIntervalSeconds: 30
+  #     HealthCheckTimeoutSeconds: 5
+  #     HealthyThresholdCount: 3
+  #     UnhealthyThresholdCount: 3
+  #     TargetType: instance
+  # # Create a listener for the load balancer
+  # Listener:
+  #   Type: AWS::ElasticLoadBalancingV2::Listener
+  #   Properties:
+  #     LoadBalancerArn: !Ref LoadBalancer
+  #     Port: 80
+  #     Protocol: HTTP
+  #     DefaultActions:
+  #     - Type: forward
+  #       TargetGroupArn: !Ref TargetGroup
+  # # Create an S3 bucket
+  # Bucket:
+  #   Type: AWS::S3::Bucket
+  #   Properties:
+  #     BucketName: my-bucket
+  # # Create an IAM role for the instances
+  # InstanceRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Statement:
+  #         Bool:
+  #           aws:SecureTransport: 'true'
+  #       Effect: Allow
+  #       Principal:
+  #         Service:
+  #           - ec2.amazonaws.com
+  #     Path: /
+  # # Attach the S3 policy to the IAM role
+  # S3Policy:
+  #   Type: AWS::IAM::Policy
+  #   Properties:
+  #     PolicyName: S3Access
+  #     PolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         Bool:
+  #           aws:SecureTransport: 'true'
+  #       Effect: Allow
+  #       Action:
+  #       - s3:ListBucket
+  #       - s3:GetObject
+  #       Resource: arn:aws:s3:::my-bucket
+  #     Roles:
+  #     - !Ref InstanceRole
+  # # Output the load balancer DNS name
+  # Outputs:
+  #   LoadBalancerDNS:
+  #     Value: !GetAtt LoadBalancer.DNSName
