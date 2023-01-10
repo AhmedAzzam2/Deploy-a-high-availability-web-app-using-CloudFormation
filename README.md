@@ -2,6 +2,11 @@
 Install the AWS CLI if you haven't already.
 
 ![Alt text](screanshot/Screenshot%202023-01-10%20224154.jpg)
+![Alt text](screanshot/Screenshot%202023-01-10%20225733.jpg)
+![Alt text](screanshot/Screenshot%202023-01-10%20230035.jpg)
+![Alt text](screanshot/Screenshot%202023-01-10%20230443.jpg)
+![Alt text](screanshot/Screenshot%202023-01-10%20230643.jpg)
+
 
 Save the CloudFormation template to a file (for example, template.yaml) on your local machine.
 
